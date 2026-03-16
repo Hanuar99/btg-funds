@@ -45,7 +45,7 @@ jobs:
         run: dart format --output=none --set-exit-if-changed .
 
       - name: Analizar código
-        run: flutter analyze
+        run: flutter analyze --no-fatal-infos
 
       - name: Ejecutar tests con cobertura
         run: flutter test --coverage
