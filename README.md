@@ -335,8 +335,8 @@ flutter doctor
 
 ```bash
 # 1. Clonar el repositorio
-git clone https://github.com/tu-usuario/btg_funds_manager.git
-cd btg_funds_manager
+git clone https://github.com/Hanuar99/btg-funds.git
+cd btg-funds
 
 # 2. Instalar dependencias
 flutter pub get
