@@ -141,7 +141,9 @@ firebase_options.dart
 .agents/
 skills-lock.json
 AGENTS.md
-.github/
+.github/agents/  
+.github/instructions/
+.github/copilot-instructions.md 
 # .vscode/   ← descomentarlo si no quieres subir las configs de VS Code
 
 # -----------------------------------------------------------------------------
