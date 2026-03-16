@@ -1,0 +1,42 @@
+[
+  {
+    "id": "1",
+    "name": "FPV_BTG_PACTUAL_RECAUDADORA",
+    "minimum_amount": 75000,
+    "category": "FPV",
+    "is_subscribed": false,
+    "subscribed_amount": 0
+  },
+  {
+    "id": "2",
+    "name": "FPV_BTG_PACTUAL_ECOPETROL",
+    "minimum_amount": 125000,
+    "category": "FPV",
+    "is_subscribed": false,
+    "subscribed_amount": 0
+  },
+  {
+    "id": "3",
+    "name": "DEUDAPRIVADA",
+    "minimum_amount": 50000,
+    "category": "FIC",
+    "is_subscribed": false,
+    "subscribed_amount": 0
+  },
+  {
+    "id": "4",
+    "name": "FDO-ACCIONES",
+    "minimum_amount": 250000,
+    "category": "FIC",
+    "is_subscribed": false,
+    "subscribed_amount": 0
+  },
+  {
+    "id": "5",
+    "name": "FPV_BTG_PACTUAL_DINAMICA",
+    "minimum_amount": 100000,
+    "category": "FPV",
+    "is_subscribed": false,
+    "subscribed_amount": 0
+  }
+]
