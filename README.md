@@ -478,22 +478,21 @@ AnimatedContainer(duration: AppAnimations.normal, curve: AppAnimations.defaultCu
 El proyecto tiene **3 pipelines** de GitHub Actions completamente configurados:
 
 ```
-push a cualquier rama
-        │
-        ▼
-┌───────────────────┐
-│  CI — Calidad     │  flutter analyze · dart format · flutter test --coverage
-└───────────────────┘
-
 push a main
         │
-        ├──────────────────────────────────────────────┐
-        ▼                                              ▼
-┌──────────────────────────┐            ┌──────────────────────────┐
-│  CD — Firebase Hosting   │            │  CD — APK Release        │
-│  flutter build web       │            │  flutter build apk       │
-│  → btg-funds.web.app     │            │  → GitHub Releases       │
-└──────────────────────────┘            └──────────────────────────┘
+        ▼
+┌───────────────────────────────────────────┐
+│  CI — Calidad de código                   │
+│  analyze · format · test · codecov        │
+└──────────────────────┬────────────────────┘
+                       │ ✅ si pasa
+          ┌────────────┴────────────┐
+          ▼                         ▼
+┌──────────────────────┐  ┌──────────────────────┐
+│  CD — Firebase Web   │  │  CD — APK Release    │
+│  build web --release │  │  build apk --release │
+│  → btg-funds.web.app │  │  → GitHub Releases   │
+└──────────────────────┘  └──────────────────────┘
 ```
 
 ### Descripción de cada pipeline

@@ -1,53 +1,22 @@
 name: CD — Deploy a Firebase (Producción)
 
+# Se dispara cuando el CI termina exitosamente en main.
+# No repite los checks de calidad — ya los hizo el CI.
 on:
-  push:
-    branches:
-      - main
-    paths-ignore:
-      - '**.md'
-      - 'assets/**'
+  workflow_run:
+    workflows: ["CI — Calidad de código"]
+    branches: [main]
+    types: [completed]
 
 concurrency:
   group: cd-production
   cancel-in-progress: false
 
 jobs:
-  # ─── 1. Calidad ──────────────────────────────────────────────
-  quality:
-    name: Analyze · Format · Test
-    runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Flutter (stable)
-        uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          cache: true
-
-      - name: Instalar dependencias
-        run: flutter pub get
-
-      - name: Generar código (Freezed · Injectable)
-        run: dart run build_runner build --delete-conflicting-outputs
-
-      - name: Verificar formato de código
-        run: dart format --output=none --set-exit-if-changed .
-
-      - name: Analizar código
-        run: flutter analyze --no-fatal-infos
-
-      - name: Ejecutar tests
-        run: flutter test --coverage
-
-  # ─── 2. Build & Deploy ───────────────────────────────────────
   deploy:
     name: Build · Deploy → Producción
-    needs: quality
+    # Solo corre si el CI pasó
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
