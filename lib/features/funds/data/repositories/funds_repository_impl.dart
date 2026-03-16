@@ -69,15 +69,12 @@ class FundsRepositoryImpl implements FundsRepository {
     }
 
     try {
-      // El repositorio es el coordinador: verifica el estado del usuario
-      // antes de delegar al datasource de catálogo.
+      // El repositorio coordina: verifica estado del usuario antes de actuar.
       final userModel = await _userDataSource.getUser();
       if (userModel.subscribedFunds.containsKey(fundId)) {
-        final fundModel = await _fundsDataSource.subscribeFund(
-          fundId: fundId,
-          amount: amount,
+        return Left(
+          AlreadySubscribedFailure('Ya está suscrito al fondo $fundId'),
         );
-        throw BusinessException('Ya está suscrito al fondo ${fundModel.name}');
       }
 
       final model = await _fundsDataSource.subscribeFund(
@@ -88,9 +85,6 @@ class FundsRepositoryImpl implements FundsRepository {
         model.copyWith(isSubscribed: true, subscribedAmount: amount).toEntity(),
       );
     } on BusinessException catch (e) {
-      if (e.message.contains('Ya está suscrito')) {
-        return Left(AlreadySubscribedFailure(e.message));
-      }
       if (e.message.contains('no encontrado')) {
         return Left(FundNotFoundFailure(e.message));
       }
@@ -112,13 +106,11 @@ class FundsRepositoryImpl implements FundsRepository {
     }
 
     try {
-      // El repositorio verifica en los datos del usuario si está suscrito
-      // y recupera el monto a devolver — fuente de verdad persistida.
+      // El repositorio verifica datos del usuario — fuente de verdad persistida.
       final userModel = await _userDataSource.getUser();
       final subscribedAmount = userModel.subscribedFunds[fundId];
       if (subscribedAmount == null) {
-        final fundModel = await _fundsDataSource.cancelFund(fundId: fundId);
-        throw BusinessException('No está suscrito al fondo ${fundModel.name}');
+        return Left(NotSubscribedFailure('No está suscrito al fondo $fundId'));
       }
 
       final model = await _fundsDataSource.cancelFund(fundId: fundId);
@@ -129,9 +121,6 @@ class FundsRepositoryImpl implements FundsRepository {
             .toEntity(),
       );
     } on BusinessException catch (e) {
-      if (e.message.contains('No está suscrito')) {
-        return Left(NotSubscribedFailure(e.message));
-      }
       if (e.message.contains('no encontrado')) {
         return Left(FundNotFoundFailure(e.message));
       }

@@ -8,7 +8,7 @@ class ErrorHandler {
 
   static Failure handle(dynamic error, [StackTrace? stackTrace]) {
     AppLogger.error(
-      'ErrorHandler capturo:',
+      'ErrorHandler capturo: $error',
       error: error,
       stackTrace: stackTrace,
     );

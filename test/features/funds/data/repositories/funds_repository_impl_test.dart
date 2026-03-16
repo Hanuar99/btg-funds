@@ -218,8 +218,9 @@ void main() {
       test(
         'retorna Right con la entity del fondo suscrito en happy path',
         () async {
-          // Arrange
+          // Arrange — usuario sin fondo '1' suscrito para que proceda la suscripción
           stubOnline();
+          when(() => mockUserDs.getUser()).thenAnswer((_) async => tUserModel);
           when(
             () => mockFundsDs.subscribeFund(
               fundId: any(named: 'fundId'),
@@ -236,20 +237,14 @@ void main() {
       );
 
       test(
-        'BusinessException con "Ya está suscrito" → AlreadySubscribedFailure',
+        '"Ya está suscrito" → AlreadySubscribedFailure (verificado desde datos usuario)',
         () async {
-          // Arrange — string EXACTO del código fuente
+          // Arrange — usuario YA tiene el fondo suscrito; el repositorio lo detecta
+          // sin necesidad de llamar al datasource.
           stubOnline();
           when(
-            () => mockFundsDs.subscribeFund(
-              fundId: any(named: 'fundId'),
-              amount: any(named: 'amount'),
-            ),
-          ).thenThrow(
-            const BusinessException(
-              'Ya está suscrito al fondo FPV_BTG_PACTUAL_RECAUDADORA',
-            ),
-          );
+            () => mockUserDs.getUser(),
+          ).thenAnswer((_) async => tUserModelSuscrito);
 
           // Act
           final result = await sut.subscribeFund(fundId: '1', amount: 75000);
@@ -266,8 +261,9 @@ void main() {
       test(
         'BusinessException con "no encontrado" → FundNotFoundFailure',
         () async {
-          // Arrange — string EXACTO del código fuente
+          // Arrange — usuario sin fondo '99' suscrito; datasource lanza fondo no encontrado
           stubOnline();
+          when(() => mockUserDs.getUser()).thenAnswer((_) async => tUserModel);
           when(
             () => mockFundsDs.subscribeFund(
               fundId: any(named: 'fundId'),
@@ -291,6 +287,7 @@ void main() {
         () async {
           // Arrange
           stubOnline();
+          when(() => mockUserDs.getUser()).thenAnswer((_) async => tUserModel);
           when(
             () => mockFundsDs.subscribeFund(
               fundId: any(named: 'fundId'),
@@ -310,17 +307,14 @@ void main() {
       );
 
       test(
-        'el mensaje del failure conserva el mensaje original de la excepción',
+        'el mensaje del failure refleja el fundId cuando ya está suscrito',
         () async {
-          // Arrange
-          const tMsg = 'Ya está suscrito al fondo RECAUDADORA';
+          // Arrange — el repositorio genera el mensaje directamente con el fundId
+          const tMsg = 'Ya está suscrito al fondo 1';
           stubOnline();
           when(
-            () => mockFundsDs.subscribeFund(
-              fundId: any(named: 'fundId'),
-              amount: any(named: 'amount'),
-            ),
-          ).thenThrow(const BusinessException(tMsg));
+            () => mockUserDs.getUser(),
+          ).thenAnswer((_) async => tUserModelSuscrito);
 
           // Act
           final result = await sut.subscribeFund(fundId: '1', amount: 75000);
@@ -349,10 +343,14 @@ void main() {
       });
 
       test(
-        'retorna Right con la entity del fondo cancelado en happy path',
+        'retorna Right con entity cancelada con el monto del usuario (para reintegro)',
         () async {
-          // Arrange — la cancelación devuelve el fondo con isSubscribed=false
+          // Arrange — usuario tiene fondo '1' suscrito por 75000; el repositorio
+          // incluye ese monto en la entity retornada para que el use case lo reintegre.
           stubOnline();
+          when(
+            () => mockUserDs.getUser(),
+          ).thenAnswer((_) async => tUserModelSuscrito);
           when(
             () => mockFundsDs.cancelFund(fundId: any(named: 'fundId')),
           ).thenAnswer((_) async => tFundModel1);
@@ -360,21 +358,25 @@ void main() {
           // Act
           final result = await sut.cancelFund(fundId: '1');
 
-          // Assert
-          expect(result, Right<Failure, Fund>(TestFixtures.tFund1));
+          // Assert — fondo con isSubscribed:false pero subscribedAmount:75000 para reintegro
+          expect(
+            result,
+            Right<Failure, Fund>(
+              TestFixtures.tFundSubscribed.copyWith(isSubscribed: false),
+            ),
+          );
         },
       );
 
       test(
-        'BusinessException con "No está suscrito" → NotSubscribedFailure',
+        '"No está suscrito" → NotSubscribedFailure (verificado desde datos usuario)',
         () async {
-          // Arrange — string EXACTO del código fuente
+          // Arrange — usuario sin fondo '1' suscrito; el repositorio detecta
+          // la condición sin llamar al datasource.
           stubOnline();
           when(
-            () => mockFundsDs.cancelFund(fundId: any(named: 'fundId')),
-          ).thenThrow(
-            const BusinessException('No está suscrito al fondo 1'),
-          );
+            () => mockUserDs.getUser(),
+          ).thenAnswer((_) async => tUserModel);
 
           // Act
           final result = await sut.cancelFund(fundId: '1');
@@ -390,8 +392,15 @@ void main() {
       test(
         'BusinessException con "no encontrado" → FundNotFoundFailure',
         () async {
-          // Arrange
+          // Arrange — usuario tiene fondo '99' suscrito para que proceda al datasource
           stubOnline();
+          when(() => mockUserDs.getUser()).thenAnswer(
+            (_) async => const UserModel(
+              id: 'user-001',
+              balance: 0,
+              subscribedFunds: {'99': 50000.0},
+            ),
+          );
           when(
             () => mockFundsDs.cancelFund(fundId: any(named: 'fundId')),
           ).thenThrow(const BusinessException('Fondo 99 no encontrado'));
@@ -408,14 +417,14 @@ void main() {
       );
 
       test(
-        'el mensaje del failure conserva el mensaje original de la excepción',
+        'el mensaje del failure refleja el fundId cuando no está suscrito',
         () async {
-          // Arrange
-          const tMsg = 'No está suscrito al fondo RECAUDADORA';
+          // Arrange — el repositorio genera el mensaje directamente con el fundId
+          const tMsg = 'No está suscrito al fondo 1';
           stubOnline();
           when(
-            () => mockFundsDs.cancelFund(fundId: any(named: 'fundId')),
-          ).thenThrow(const BusinessException(tMsg));
+            () => mockUserDs.getUser(),
+          ).thenAnswer((_) async => tUserModel);
 
           // Act
           final result = await sut.cancelFund(fundId: '1');
