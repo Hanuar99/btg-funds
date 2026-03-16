@@ -8,7 +8,7 @@ class ErrorBoundary extends StatelessWidget {
   const ErrorBoundary({
     required this.message,
     this.onRetry,
-    this.icon = Icons.wifi_off_outlined,
+    this.icon = Icons.error_outline,
     super.key,
   });
   final String message;

@@ -31,7 +31,7 @@ class _AnimatedEmptyStateState extends State<AnimatedEmptyState>
   late final Animation<double> _scale;
 
   @override
-  Future<void> initState() async {
+  void initState() {
     super.initState();
     _controller = AnimationController(
       vsync: this,
@@ -43,7 +43,7 @@ class _AnimatedEmptyStateState extends State<AnimatedEmptyState>
     );
     _fade = Tween<double>(begin: 0, end: 1).animate(curve);
     _scale = Tween<double>(begin: 0.8, end: 1).animate(curve);
-    await _controller.forward();
+    _controller.forward();
   }
 
   @override
