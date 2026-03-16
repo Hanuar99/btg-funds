@@ -30,71 +30,43 @@ class FundsLocalDatasourceImpl implements FundsLocalDatasource {
   @override
   Future<List<FundModel>> getFunds() async {
     await Future<void>.delayed(_simulatedDelay);
-
-    if (!_initialized) {
-      await _loadFromAssets();
-    }
+    if (!_initialized) await _loadFromAssets();
     return List<FundModel>.unmodifiable(_funds);
   }
 
+  /// Valida que el fondo exista y retorna su modelo base.
+  /// La verificación de suscripción duplicada es responsabilidad del repositorio.
   @override
   Future<FundModel> subscribeFund({
     required String fundId,
     required double amount,
   }) async {
     await Future<void>.delayed(_simulatedDelay);
+    if (!_initialized) await _loadFromAssets();
 
-    if (!_initialized) {
-      await _loadFromAssets();
-    }
-
-    final index = _funds.indexWhere((fund) => fund.id == fundId);
-    if (index == -1) {
-      throw BusinessException('Fondo $fundId no encontrado');
-    }
-
-    final fund = _funds[index];
-    if (fund.isSubscribed) {
-      throw BusinessException('Ya está suscrito al fondo ${fund.name}');
-    }
-
-    final updated = fund.copyWith(isSubscribed: true, subscribedAmount: amount);
-    _funds[index] = updated;
-
-    AppLogger.info(
-      'Suscripción: ${fund.name} · COP ${amount.toStringAsFixed(0)}',
-    );
-
-    return updated;
+    final fund = _findFund(fundId);
+    AppLogger.info('Fondo validado para suscripción: ${fund.name}');
+    return fund;
   }
 
+  /// Valida que el fondo exista y retorna su modelo base.
+  /// La verificación de "está suscrito" es responsabilidad del repositorio.
   @override
   Future<FundModel> cancelFund({required String fundId}) async {
     await Future<void>.delayed(_simulatedDelay);
+    if (!_initialized) await _loadFromAssets();
 
-    if (!_initialized) {
-      await _loadFromAssets();
-    }
+    final fund = _findFund(fundId);
+    AppLogger.info('Fondo validado para cancelación: ${fund.name}');
+    return fund;
+  }
 
-    final index = _funds.indexWhere((fund) => fund.id == fundId);
-    if (index == -1) {
-      throw BusinessException('Fondo $fundId no encontrado');
-    }
-
-    final fund = _funds[index];
-    if (!fund.isSubscribed) {
-      throw BusinessException('No está suscrito al fondo ${fund.name}');
-    }
-
-    final refundedAmount = fund.subscribedAmount;
-
-    final updated = fund.copyWith(isSubscribed: false, subscribedAmount: 0);
-    _funds[index] = updated;
-
-    AppLogger.info('Cancelación: ${fund.name}');
-
-    // Retornamos el monto previo para que el caso de uso pueda reintegrarlo.
-    return updated.copyWith(subscribedAmount: refundedAmount);
+  FundModel _findFund(String fundId) {
+    final fund = _funds.firstWhere(
+      (f) => f.id == fundId,
+      orElse: () => throw BusinessException('Fondo $fundId no encontrado'),
+    );
+    return fund;
   }
 
   Future<void> _loadFromAssets() async {
@@ -105,7 +77,7 @@ class FundsLocalDatasourceImpl implements FundsLocalDatasource {
           .map((item) => FundModel.fromJson(item as Map<String, dynamic>))
           .toList(growable: true);
       _initialized = true;
-      AppLogger.debug('Fondos cargados: ${_funds.length}');
+      AppLogger.debug('Fondos cargados desde assets: ${_funds.length}');
     } on Object catch (e, stackTrace) {
       AppLogger.error(
         'Error cargando fondos desde assets',

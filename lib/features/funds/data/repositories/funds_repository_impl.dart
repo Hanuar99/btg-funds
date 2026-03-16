@@ -69,11 +69,24 @@ class FundsRepositoryImpl implements FundsRepository {
     }
 
     try {
+      // El repositorio es el coordinador: verifica el estado del usuario
+      // antes de delegar al datasource de catálogo.
+      final userModel = await _userDataSource.getUser();
+      if (userModel.subscribedFunds.containsKey(fundId)) {
+        final fundModel = await _fundsDataSource.subscribeFund(
+          fundId: fundId,
+          amount: amount,
+        );
+        throw BusinessException('Ya está suscrito al fondo ${fundModel.name}');
+      }
+
       final model = await _fundsDataSource.subscribeFund(
         fundId: fundId,
         amount: amount,
       );
-      return Right(model.toEntity());
+      return Right(
+        model.copyWith(isSubscribed: true, subscribedAmount: amount).toEntity(),
+      );
     } on BusinessException catch (e) {
       if (e.message.contains('Ya está suscrito')) {
         return Left(AlreadySubscribedFailure(e.message));
@@ -99,8 +112,22 @@ class FundsRepositoryImpl implements FundsRepository {
     }
 
     try {
+      // El repositorio verifica en los datos del usuario si está suscrito
+      // y recupera el monto a devolver — fuente de verdad persistida.
+      final userModel = await _userDataSource.getUser();
+      final subscribedAmount = userModel.subscribedFunds[fundId];
+      if (subscribedAmount == null) {
+        final fundModel = await _fundsDataSource.cancelFund(fundId: fundId);
+        throw BusinessException('No está suscrito al fondo ${fundModel.name}');
+      }
+
       final model = await _fundsDataSource.cancelFund(fundId: fundId);
-      return Right(model.toEntity());
+      // Retornamos el monto previo para que el use case pueda reintegrarlo.
+      return Right(
+        model
+            .copyWith(isSubscribed: false, subscribedAmount: subscribedAmount)
+            .toEntity(),
+      );
     } on BusinessException catch (e) {
       if (e.message.contains('No está suscrito')) {
         return Left(NotSubscribedFailure(e.message));
