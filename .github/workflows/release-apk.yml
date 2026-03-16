@@ -1,0 +1,61 @@
+name: CD — Build & Release APK
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '**.md'
+      - 'assets/screenshots/**'
+
+concurrency:
+  group: cd-apk
+  cancel-in-progress: false
+
+jobs:
+  build-apk:
+    name: Build APK → GitHub Release
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter (stable)
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Instalar dependencias
+        run: flutter pub get
+
+      - name: Generar código (Freezed · Injectable)
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Build APK (release)
+        run: flutter build apk --release
+
+      - name: Renombrar APK
+        run: mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/btg-funds.apk
+
+      - name: Crear / actualizar GitHub Release "latest"
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: "BTG Funds Manager — Latest Build"
+          body: |
+            ## 📱 APK — Última versión
+
+            Descarga e instala directamente en Android.
+
+            > Permite instalación desde fuentes desconocidas en Ajustes → Seguridad.
+
+            **Construido desde:** `${{ github.sha }}`
+          files: build/app/outputs/flutter-apk/btg-funds.apk
+          make_latest: true
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

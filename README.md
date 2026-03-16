@@ -6,6 +6,16 @@
   <img src="https://img.shields.io/badge/Tests-225%20casos%20·%2019%20archivos-2EA44F" alt="Tests">
 </p>
 
+<p align="center">
+  <a href="https://btg-funds.web.app" target="_blank">
+    <img src="https://img.shields.io/badge/🌐%20Demo%20Web-Firebase%20Hosting-FF6F00?style=for-the-badge&logo=firebase&logoColor=white" alt="Demo Web">
+  </a>
+  &nbsp;
+  <a href="https://github.com/Hanuar99/btg-funds/releases/latest/download/btg-funds.apk" target="_blank">
+    <img src="https://img.shields.io/badge/📱%20Descargar%20APK-Android-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Descargar APK">
+  </a>
+</p>
+
 # Manejo de Fondos (FPV/FIC) para clientes BTG
 
 Aplicación Flutter multiplataforma (Android · iOS · Web) para gestionar la suscripción y cancelación de fondos de inversión BTG, con historial de transacciones y notificaciones. Diseñada con **Clean Architecture** estricta y gestión de estado con **BLoC**.
@@ -25,12 +35,22 @@ Aplicación Flutter multiplataforma (Android · iOS · Web) para gestionar la su
 - [Testing](#testing)
 - [Design System](#design-system)
 - [Decisiones Técnicas](#decisiones-técnicas)
+- [CI/CD](#cicd--integración-y-despliegue-continuo)
 - [Compatibilidad](#compatibilidad)
 - [Licencia](#licencia)
 
 ---
 
 ## Capturas y Demo
+
+### Links rápidos
+
+| Plataforma | Link | Descripción |
+|:---:|:---:|:---:|
+| 🌐 **Web** | [btg-funds.web.app](https://btg-funds.web.app) | Desplegado en Firebase Hosting |
+| 📱 **Android APK** | [Descargar última versión](https://github.com/Hanuar99/btg-funds/releases/latest/download/btg-funds.apk) | Build release desde GitHub Actions |
+
+---
 
 ### Video — Flujo completo (móvil + web)
 
@@ -450,6 +470,53 @@ AnimatedContainer(duration: AppAnimations.normal, curve: AppAnimations.defaultCu
 | **Arquitectura** | Clean Architecture 3 capas | Domain aislado, Data reemplazable, Presentation desacoplada |
 | **DI** | GetIt + Injectable | Service locator con registro automático por anotaciones |
 | **Tipografía** | Inter (custom font) | Legibilidad, aspecto profesional, pesos múltiples |
+
+---
+
+## CI/CD — Integración y Despliegue Continuo
+
+El proyecto tiene **3 pipelines** de GitHub Actions completamente configurados:
+
+```
+push a cualquier rama
+        │
+        ▼
+┌───────────────────┐
+│  CI — Calidad     │  flutter analyze · dart format · flutter test --coverage
+└───────────────────┘
+
+push a main
+        │
+        ├──────────────────────────────────────────────┐
+        ▼                                              ▼
+┌──────────────────────────┐            ┌──────────────────────────┐
+│  CD — Firebase Hosting   │            │  CD — APK Release        │
+│  flutter build web       │            │  flutter build apk       │
+│  → btg-funds.web.app     │            │  → GitHub Releases       │
+└──────────────────────────┘            └──────────────────────────┘
+```
+
+### Descripción de cada pipeline
+
+| Workflow | Disparador | Pasos | Resultado |
+|----------|-----------|-------|-----------|
+| **CI — Calidad** | Todo push | Analyze · Format · Test · Codecov | Badge de estado en cada commit |
+| **CD — Web (Producción)** | Push a `main` | Calidad → Build web → Deploy | [btg-funds.web.app](https://btg-funds.web.app) actualizado |
+| **CD — APK Release** | Push a `main` | Build APK release | Descargable en [GitHub Releases](https://github.com/Hanuar99/btg-funds/releases/latest) |
+
+### Badges de estado
+
+<p align="center">
+  <a href="https://github.com/Hanuar99/btg-funds/actions/workflows/ci.yml">
+    <img src="https://github.com/Hanuar99/btg-funds/actions/workflows/ci.yml/badge.svg" alt="CI — Calidad">
+  </a>
+  <a href="https://github.com/Hanuar99/btg-funds/actions/workflows/firebase-hosting-merge.yml">
+    <img src="https://github.com/Hanuar99/btg-funds/actions/workflows/firebase-hosting-merge.yml/badge.svg" alt="CD — Deploy Web">
+  </a>
+  <a href="https://github.com/Hanuar99/btg-funds/actions/workflows/release-apk.yml">
+    <img src="https://github.com/Hanuar99/btg-funds/actions/workflows/release-apk.yml/badge.svg" alt="CD — APK">
+  </a>
+</p>
 
 ---
 
