@@ -32,6 +32,9 @@ jobs:
       - name: Instalar dependencias
         run: flutter pub get
 
+      - name: Generar código (Freezed · Injectable)
+        run: dart run build_runner build --delete-conflicting-outputs
+
       - name: Verificar formato de código
         run: dart format --output=none --set-exit-if-changed .
 
